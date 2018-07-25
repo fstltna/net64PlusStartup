@@ -1,0 +1,96 @@
+#!/usr/bin/perl
+
+### BEGIN INIT INFO
+# Provides:          net64plus
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: net64+ service 1.0
+# Description:       net64+ service 1.0
+# Documentation:     https://minecity.online/index.php/forum/startup-scripts
+# Type:              forking
+# X-Interactive:     false
+### END INIT INFO
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 1, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+my $NET64PLUSDIR = "/root/net64plus-server";
+my $STARTCMD = "";
+
+my $Command = $ARGV[0];
+if ($Command eq "")
+{
+	$Command = "NONE";
+}
+
+my $running=`ps ax|grep net64plus-server|grep -v grep`;
+
+if ($Command eq "start")
+{
+	if ($running eq "")
+	{
+		print "Starting Net64plus...\n";
+		if (-f "$NET64PLUSDIR/nostart")
+		{
+			print "Removing $NET64PLUSDIR/nostart\n";
+			# Remove the lock file if it exists
+			unlink("$NET64PLUSDIR/nostart");
+		}
+		# Start the screen process
+		system("nohup $NET64PLUSDIR/startnet64plus > /tmp/Net64plusStartup.log\&");
+	}
+}
+elsif ($Command eq "stop")
+{
+	print "Stopping Net64plus process...\n";
+	system("touch '$NET64PLUSDIR/nostart'");
+	if ($running ne "")
+	{
+		# Process is running, kill it
+		system("killall net64plus-server");
+	}
+}
+elsif ($Command eq "restart")
+{
+	if (-f "$NET64PLUSDIR/nostart")
+	{
+		print("Removing $NET64PLUSDIR/nostart\n");
+		unlink("$NET64PLUSDIR/nostart");
+	}
+	if ($running ne "")
+	{
+		system("killall net64plus-server");
+	}
+}
+elsif ($Command eq "status")
+{
+	if ($running ne "")
+	{
+		print("Net64plus Server Running\n");
+	}
+	else
+	{
+		print("Net64plus Server Not Running\n");
+	}
+}
+else
+{
+	print ("Uknown command '$Command'\n");
+	print ("Usage: $0 {start|status|stop|restart}\n");
+	exit(1);
+}
+
+exit(0);
